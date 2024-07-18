@@ -1,16 +1,35 @@
+import os
+from dotenv import load_dotenv
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+from io import StringIO
 
 from st_aggrid import AgGrid, GridUpdateMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
+
+import openai
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize session state for page navigation and other input  
 if 'page' not in st.session_state:  
     st.session_state.page = 'intro'  
 if 'title' not in st.session_state:  
     st.session_state.title = ""  
+if 'uploaded_file' not in st.session_state:  
+    st.session_state.uploaded_file = None  
+if 'profit_centers' not in st.session_state:  
+    st.session_state.profit_centers = []  
+if 'product_descriptions' not in st.session_state:  
+    st.session_state.product_descriptions = []  
+if 'selected_business' not in st.session_state:  
+    st.session_state.selected_business = ""  
+if 'selected_product' not in st.session_state:  
+    st.session_state.selected_product = ""  
+    
+df=""
 
 def navigate_page(new_page):
   st.session_state.page = new_page
@@ -18,130 +37,69 @@ def navigate_page(new_page):
 def init_input_page():
   st.title("Init Input")
   form = st.form(key="title_form")
+
+  # Title input
   title_input = form.text_input("Portfolio Name", st.session_state.title)
+
   if title_input:  
     st.session_state.title = title_input
-  dataset_option = form.selectbox('Select Business', ['Business1', 'Business2', 'Business3'], key='business')  
-  column_option = form.selectbox('Select Products', ['Product1', 'Product2', 'Product3'], key='product')  
+  
+  # File uploader  
+  uploaded_file = form.file_uploader(
+     "Upload Appetite Data Sheet", 
+     accept_multiple_files=True, 
+     
+     help="Upload a CSV file containing your appetite data."
+  )
+  done_button = form.form_submit_button('done')
+  
+    # Process uploaded file and update dropdown options  
+  if uploaded_file is not None:  
+    st.session_state.uploaded_file = uploaded_file
+    # Process different file formats  
+    for file in uploaded_file:
+      if file.name.endswith('.csv'):  
+        bytes_data = file.getvalue()
+        string_data = StringIO(bytes_data.decode("utf-8"))
+        
+        df = pd.read_csv(string_data)
+        st.session_state.uploaded_file = df
+        # Update dropdown options with columns from the uploaded file  
+        st.session_state.profit_centers = df['profit_center'].dropna().unique()
+        st.session_state.product_descriptions = df['product_description'].dropna().unique()
+        # print(st.session_state.profit_centers)
+        # print(st.session_state.product_descriptions)
+        
+        if done_button:
+          selected_business = form.selectbox('Select Business', df['profit_center'].unique(), key='business')  
+          selected_product = form.selectbox('Select Products', df['product_description'].unique(), key='product')  
+          st.session_state.selected_business = selected_business
+          st.session_state.selected_product = selected_product
 
-  # Use `form.form_submit_button` which we can control  
-  submit_button = form.form_submit_button('next')
-
-  if submit_button and title_input.strip():
-    st.session_state.title = title_input 
-    navigate_page(title_input)   
-  elif submit_button: 
-     st.error("Please type the title of next page.")
-
-# Load the data into a DataFrame
-def load_data():
-  return pd.read_csv("Data1.csv")
+  
+  # if submit_button and title_input.strip() and uploaded_file is not None:  
+  #   st.session_state.title = title_input
+  #   navigate_page("table")  
+  if st.button("next"):
+    navigate_page("table")
 
 # Function for the table page 
 def table_page():  
-  data = load_data()
-  # Display the custom title  
+  data = st.session_state.uploaded_file
   st.title(st.session_state.title)
-
-  st.sidebar.header("Filter Options")
-
-  # Filter by Client Country
-  countries = data['client_country'].unique()
-  selected_country = st.sidebar.multiselect("Select Client Country", countries, default=None)
-
-  # Filter by Industry  
-  industries = data['Industry'].unique()
-  selected_industry = st.sidebar.multiselect('Select Industry', industries, default=None)
-
-  # Filter by Currency  
-  currencies = data['currency'].unique()
-  selected_currency = st.sidebar.multiselect('Select Currency', currencies, default=None)
-
-  # Apply filters to the DataFrame  
-  filtered_data = data[  
-      (data['client_country'].isin(selected_country)) &  
-      (data['Industry'].isin(selected_industry)) &  
-      (data['currency'].isin(selected_currency))  
-  ]
-
-
-  # Add custom CSS to extend the table size  
-  st.markdown(  
-   """  
-   <style>  
-   .dataframe-container {  
-       width: 100%;  
-       overflow: auto;  
-   }  
-   </style>  
-   """,  
-   unsafe_allow_html=True  
-  )
-
-  if len(filtered_data) == 0:  
-    st.dataframe(data)  #'No data available with the current filters.'
+  if data is not None:  
+    # print(selected_business)
+    # print(selected_product)
+    selected_business = st.session_state.selected_business
+    selected_product = st.session_state.selected_product
+    print(selected_business)
+    # print(data[data['profit_center'] == selected_business])
+    filtered_data = data[(data['profit_center'] == selected_business) & (data['product_description'] == selected_product)]  
+    st.write(filtered_data)  
   else:  
-    st.subheader('Filtered Data')
+      st.error("Dataframe is empty. Please go back to the previous page and upload a file.")  
 
-    
-    df = pd.DataFrame(filtered_data)
-    gd = GridOptionsBuilder.from_dataframe(df)
-    gd.configure_selection(selection_mode="multiple", use_checkbox=True)
-    gridoptions = gd.build()
-
-    grid_table = AgGrid(df, height=250, gridOptions=gridoptions, update_mode= GridUpdateMode.SELECTION_CHANGED)
-
-    selected_row = grid_table["selected_rows"]
-
-    selected_data = pd.DataFrame(selected_row)
-
-    if selected_row is not None and not selected_row.empty:  
-      st.subheader('Selected Data')
-      
-      apply_filters = st.checkbox("Apply filters")
-
-      st.dataframe(selected_row)
-
-       # Filter check button  
-      
-      
-      filter_conditions = {}  
-
-      if apply_filters:  
-        st.sidebar.header("Filter Options")  
-      
-
-        # Specific columns to apply additional filters  
-        filter_columns = ["attachment", "premium", "layer_limit_requested", "total_commission"]  
-        
-          # Sidebar filter options based on the selected data  
-        for column in selected_data.columns:  
-                if column == "favorite":  
-                    continue  
-                if selected_data[column].dtype == 'object':  
-                    selected_values = st.sidebar.multiselect(f"Filter by {column}", options=selected_data[column].unique(), default=selected_data[column].unique())  
-                    filter_conditions[column] = selected_values  
-                elif np.issubdtype(selected_data[column].dtype, np.number) and column in ["attachment", "premium", "layer_limit_requested", "total_commission"]:  
-                    min_val = selected_data[column].min()  
-                    max_val = selected_data[column].max()  
-                    selected_range = st.sidebar.slider(f"Filter by {column}", min_val, max_val, (min_val, max_val))  
-                    filter_conditions[column] = selected_range 
-        # Apply the filters to the selected data  
-        for col, condition in filter_conditions.items():  
-            if isinstance(condition, tuple):  
-                selected_data = selected_data[(selected_data[col] >= condition[0]) & (selected_data[col] <= condition[1])]  
-
-        st.subheader("Filtered Selected Data")  
-        if selected_data.empty:  
-            st.write("No data available with the current filters.")  
-        else:  
-            st.write(selected_data) 
-  
-    else: 
-      st.write("")
-
-# Page Navigation Logic  
 if st.session_state.page == 'intro':  
     init_input_page()  
-elif st.session_state.page == st.session_state.title:  
+elif st.session_state.page == 'table':  
     table_page()  
