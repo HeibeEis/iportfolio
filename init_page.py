@@ -41,8 +41,12 @@ def init_input_page():
         
         df = pd.read_csv(string_data)
         st.session_state.uploaded_file = df
+        # Normalize case for 'profit_center' and 'product_description' 
+        df['profit_center'] = df['profit_center'].str.title()  
+        df['product_description'] = df['product_description'].str.title()
         # Update dropdown options with columns from the uploaded file  
         st.session_state.profit_centers = df['profit_center'].dropna().unique()
+        
         st.session_state.product_descriptions = df['product_description'].dropna().unique()
         # print(st.session_state.profit_centers)
         # print(st.session_state.product_descriptions)
@@ -50,6 +54,8 @@ def init_input_page():
         if done_button:
           selected_business = form.selectbox('Select Business', df['profit_center'].unique(), key='business')  
           selected_product = form.selectbox('Select Products', df['product_description'].unique(), key='product')  
+          # allocate_button = form.form_submit_button("apply")
+          # if allocate_button:
           st.session_state.selected_business = selected_business
           st.session_state.selected_product = selected_product
 
@@ -57,5 +63,5 @@ def init_input_page():
   # if submit_button and title_input.strip() and uploaded_file is not None:  
   #   st.session_state.title = title_input
   #   navigate_page("table")  
-  if st.button("next"):
+  if st.button("next") and uploaded_file is not None and title_input.strip():
     navigate_page("table")
