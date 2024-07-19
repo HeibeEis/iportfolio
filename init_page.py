@@ -37,7 +37,7 @@ def init_input_page():
     for file in uploaded_file:
       if file.name.endswith('.csv'):  
         bytes_data = file.getvalue()
-        string_data = StringIO(bytes_data.decode("utf-8"))
+        string_data = StringIO(bytes_data.decode("windows-1252"))
         
         df = pd.read_csv(string_data)
         st.session_state.uploaded_file = df
