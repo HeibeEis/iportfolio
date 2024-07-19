@@ -18,8 +18,23 @@ system_prompt = ("""
     Ensure correct handling and access to user-uploaded files, and display tables as intended. When filtering, consider both lower and upper case variations of text inputs to ensure comprehensive results.  
 
     For custom reporting, the GPT will filter data based on user-defined criteria such as profit center, inception date range, expiry date range, currency, and premium thresholds. These reports can be exported in various formats including PDF, Excel, and CSV.  
+    
+    
 """  
 )  
+
+def show_table(data, set_check=True):
+  df = pd.DataFrame(data)
+  gd = GridOptionsBuilder.from_dataframe(df)
+  gd.configure_selection(selection_mode="multiple", use_checkbox=set_check, header_checkbox=set_check)
+  for col in df.columns:
+    gd.configure_column(col, headerCheckboxSelection=set_check, checkboxSelection=set_check)
+    break
+  gridoptions = gd.build()
+  grid_table = AgGrid(df, height=250, gridOptions=gridoptions, update_mode= GridUpdateMode.SELECTION_CHANGED)
+  # Retrieve the selected row data  
+  selected_rows = grid_table['selected_rows']  
+  return selected_rows
 
 # Function for the table page 
 def table_page():  
@@ -38,14 +53,7 @@ def table_page():
   else:  
       st.error("Dataframe is empty. Please go back to the previous page and upload a file.")  
 
-  df = pd.DataFrame(filtered_data)
-  gd = GridOptionsBuilder.from_dataframe(df)
-  gd.configure_selection(selection_mode="multiple", use_checkbox=True)
-  gridoptions = gd.build()
-
-  grid_table = AgGrid(df, height=250, gridOptions=gridoptions, update_mode= GridUpdateMode.SELECTION_CHANGED)
-
-  selected_row = grid_table["selected_rows"]
+  selected_row = show_table(filtered_data)
 
   selected_data = pd.DataFrame(selected_row)
 
