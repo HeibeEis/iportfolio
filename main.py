@@ -25,6 +25,10 @@ if 'messages' not in st.session_state:
     st.session_state.messages = [
       {"role": "system", "content":system_prompt}
     ]  
+if 'uploaded_file' not in st.session_state:  
+    st.session_state.uploaded_file = None 
+if 'chat_history' not in st.session_state:  
+    st.session_state.chat_history = []  
 
 def main():
   if st.session_state.page == 'intro':  
