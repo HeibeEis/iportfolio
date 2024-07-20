@@ -19,9 +19,68 @@ system_prompt = ("""
 
     For custom reporting, the GPT will filter data based on user-defined criteria such as profit center, inception date range, expiry date range, currency, and premium thresholds. These reports can be exported in various formats including PDF, Excel, and CSV.  
     
+    The primary data source is a formatted accounts file containing fields such as 'Industry', 'Layer Limit Requested', 'Attachment', 'Premium', 'Total Commission', 'Loss Ratio', and others. All monetary values (e.g., layer_limit_requested, attachment, premium) must be converted to US dollars. Percentages (e.g., total_commission, loss_ratio) must be formatted accordingly.  
+
+    Return optimization result table for every data name.
     
+    if users ask according to this type of requests : "Optimize my insurance portfolio based on the given risk appetite.", return table with this style : 
+      Industry: Technology,
+      Layer Limit Requested: $5,000,000,
+      Attachment: $1,000,000,
+      Premium: $200,000 
+      Total Commission: 10%
+      Loss Ratio: 30%
 """  
 )  
+
+# Custom CSS to fix the input box at the bottom  
+st.markdown("""  
+    <style>  
+    .footer {  
+        position: fixed;  
+        right: 0;  
+        bottom: 30;  
+        width: 60%;  
+        background-color: inherit;  
+        padding: 12px 8px;  
+        box-shadow: 0px -1px 10px rgba(0, 0, 0, 0.1);  
+        z-index: 3;  
+    }  
+    .main > div {  
+        padding-bottom: 100px; /* Adjust padding to ensure content is above the input */  
+    }  
+    .stTextInput input {  
+        width: 100%;  
+    }  
+    </style>  
+    """, unsafe_allow_html=True) 
+
+# The `st.empty` placeholder is used to keep track of where the input should be rendered  
+input_placeholder = st.empty() 
+
+# Template for the input HTML  
+text_input_html = """  
+    <div class="footer">  
+        <!-- The actual input field to take user text input -->  
+        <input id="user_input" type="text" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc;" placeholder="Type your message here..."/>  
+    </div>  
+    <script>  
+        const input = document.getElementById("user_input");  
+        input.addEventListener("keydown", function(event) {  
+            if (event.key === "Enter") {  
+                event.preventDefault();  
+                const message = input.value;  
+                input.value = "";  
+                if (message !== "") {  
+                    window.parent.postMessage({ type: "streamlit:customEvent", data: message }, "*");  
+                }  
+            }  
+        });  
+    </script>  
+    """  
+# # Render the input HTML  
+# input_placeholder.markdown(text_input_html, unsafe_allow_html=True)      
+    
 
 def preprocess_attachment(data):  
     # Remove '$' character and convert to numeric value  
@@ -126,7 +185,7 @@ def table_page():
           # Displaying the entire chat history  
           for chat in st.session_state.chat_history:  
               st.markdown(f"**You:** {chat['user_input']}")  
-              st.markdown(f"**iPortfolio:** {chat['response']}")            
+              st.markdown(f"**iPortfolio:** {chat['response']}")         
       
    
     
