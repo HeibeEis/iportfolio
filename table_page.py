@@ -30,6 +30,7 @@ system_prompt = ("""
       Premium: $200,000 
       Total Commission: 10%
       Loss Ratio: 30%
+    Using data from table, Must calculate Loss Ratio, Must not provide N/A or "-" for Loss Ratio. Must show the value of loss ratoio
 """  
 )  
 
