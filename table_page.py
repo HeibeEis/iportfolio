@@ -23,6 +23,13 @@ system_prompt = ("""
 """  
 )  
 
+def preprocess_attachment(data):  
+    # Remove '$' character and convert to numeric value  
+    data['attachment'] = data['attachment'].replace({r'\$': '', 'k': 'e3', ",": "", "-": "", " ": ""}, regex=True).apply(pd.to_numeric)  
+    data['layer_limit_requested'] = data['layer_limit_requested'].replace({r'\$': '', 'k': 'e3', ",": "", "-": "", " ": ""}, regex=True).apply(pd.to_numeric)  
+    data['premium'] = data['premium'].replace({r'\$': '', 'k': 'e3', ",": "", "-": "", " ": ""}, regex=True).apply(pd.to_numeric)  
+    return data
+
 def show_table(data, set_check=True):
   df = pd.DataFrame(data)
   gd = GridOptionsBuilder.from_dataframe(df)
@@ -42,31 +49,69 @@ def table_page():
   data = st.session_state.uploaded_file
   st.title(st.session_state.title)
   if data is not None:  
-    # print(selected_business)
-    # print(selected_product)
     selected_business = st.session_state.selected_business
     selected_product = st.session_state.selected_product
-    print(selected_business)
-    # print(data[data['profit_center'] == selected_business])
+    
     filtered_data = data[(data['profit_center'] == selected_business) & (data['product_description'] == selected_product)]  
-    # st.write(filtered_data)  
+     # Filter options  
+    st.sidebar.header("Filter Options")  
+    
+    # Filter by Industry  
+    industries = data['Industry'].unique()  
+    selected_industry = st.sidebar.multiselect('Select Industry', industries, default=None)  
+    if selected_industry:  
+        filtered_data = filtered_data[filtered_data['Industry'].isin(selected_industry)]  
+        print(f"filter_data {filtered_data}")
+    
+    filtered_data = preprocess_attachment(filtered_data)
+    
+    attachment_min, attachment_max = filtered_data['attachment'].min(), filtered_data['attachment'].max()  
+    layer_limit_min, layer_limit_max = filtered_data['layer_limit_requested'].min(), filtered_data['layer_limit_requested'].max()  
+    premium_min, premium_max = filtered_data['premium'].min(), filtered_data['premium'].max()  
+    
+        
+    # Slider filters  
+    selected_attachment_range = st.sidebar.slider(  
+        'Select Attachment Range',  
+        min_value=int(attachment_min),  
+        max_value=int(attachment_max),  
+        value=(int(attachment_min), int(attachment_max)),  
+        step=1  
+    )  
+    selected_layer_limit_range = st.sidebar.slider(  
+        'Select Layer Limit Requested Range',  
+        min_value=int(layer_limit_min),  
+        max_value=int(layer_limit_max),  
+        value=(int(layer_limit_min), int(layer_limit_max)),  
+        step=1  
+    )  
+    selected_premium_range = st.sidebar.slider(  
+        'Select Premium Range',  
+        min_value=int(premium_min),  
+        max_value=int(premium_max),  
+        value=(int(premium_min), int(premium_max)),  
+        step=1  
+    )  
+
+    # Apply slider filters  
+    filtered_data = filtered_data[  
+        (filtered_data['attachment'] >= selected_attachment_range[0]) &   
+        (filtered_data['attachment'] <= selected_attachment_range[1]) &   
+        (filtered_data['layer_limit_requested'] >= selected_layer_limit_range[0]) &   
+        (filtered_data['layer_limit_requested'] <= selected_layer_limit_range[1]) &   
+        (filtered_data['premium'] >= selected_premium_range[0]) &   
+        (filtered_data['premium'] <= selected_premium_range[1])  
+    ]  
+    selected_row = show_table(filtered_data)  
+    
   else:  
       st.error("Dataframe is empty. Please go back to the previous page and upload a file.")  
-
-  selected_row = show_table(filtered_data)
-
-  selected_data = pd.DataFrame(selected_row)
+  
 
   if selected_row is not None and not selected_row.empty:  
-    # Layout: Left-bottom checkbox, right-bottom button  
-    # col1, col2 = st.columns([1, 1])  
-    # with col1:  
-      apply_filters = st.checkbox("Apply Filters")  
-    # with col2:  
       user_input = st.text_input("", value="", key="user_input")  
       if user_input.strip():  
         # Add the selected data to the messages before sending it to GPT-4  
-          
           st.session_state.messages.append({"role": "user", "content": user_input})  
           if not selected_row.empty:  
             selected_data_json = selected_row.to_json(orient='records')  
@@ -75,14 +120,14 @@ def table_page():
           with st.spinner('Analyzing...'):  
               response = fetch_gpt4_response(st.session_state.messages)  
               if response:  
-                  st.markdown(f"**You:** {user_input}")  
-                  st.markdown(f"**Portfolio Optimizer:** {response}")  
-                    
-    # st.dataframe(selected_row)
+                  st.session_state.messages.append({"role": "assistant", "content": response})  
+                  # Store the history of inputs and responses  
+                  st.session_state.chat_history.append({"user_input": user_input, "response": response})  
+          # Displaying the entire chat history  
+          for chat in st.session_state.chat_history:  
+              st.markdown(f"**You:** {chat['user_input']}")  
+              st.markdown(f"**iPortfolio:** {chat['response']}")            
+      
+   
     
-    
-      if apply_filters:  
-        st.sidebar.header("Filter Options")  
-        # Filter by Industry  
-        industries = data['Industry'].unique()
-        selected_industry = st.sidebar.multiselect('Select Industry', industries, default=None)
+      
