@@ -36,11 +36,11 @@ system_prompt = ("""
 # Custom CSS to fix the input box at the bottom  
 st.markdown("""  
     <style>  
-    .footer {  
+    input[id='user_input'] {  
         position: fixed;  
         right: 0;  
-        bottom: 30;  
-        width: 60%;  
+        bottom: 0 !important;  
+        width: 100%;  
         background-color: inherit;  
         padding: 12px 8px;  
         box-shadow: 0px -1px 10px rgba(0, 0, 0, 0.1);  
@@ -59,25 +59,25 @@ st.markdown("""
 input_placeholder = st.empty() 
 
 # Template for the input HTML  
-text_input_html = """  
-    <div class="footer">  
-        <!-- The actual input field to take user text input -->  
-        <input id="user_input" type="text" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc;" placeholder="Type your message here..."/>  
-    </div>  
-    <script>  
-        const input = document.getElementById("user_input");  
-        input.addEventListener("keydown", function(event) {  
-            if (event.key === "Enter") {  
-                event.preventDefault();  
-                const message = input.value;  
-                input.value = "";  
-                if (message !== "") {  
-                    window.parent.postMessage({ type: "streamlit:customEvent", data: message }, "*");  
-                }  
-            }  
-        });  
-    </script>  
-    """  
+# text_input_html = """  
+#     <div class="footer">  
+#         <!-- The actual input field to take user text input -->  
+#         <input id="user_input" type="text" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc;" placeholder="Type your message here..."/>  
+#     </div>  
+#     <script>  
+#         const input = document.getElementById("user_input");  
+#         input.addEventListener("keydown", function(event) {  
+#             if (event.key === "Enter") {  
+#                 event.preventDefault();  
+#                 const message = input.value;  
+#                 input.value = "";  
+#                 if (message !== "") {  
+#                     window.parent.postMessage({ type: "streamlit:customEvent", data: message }, "*");  
+#                 }  
+#             }  
+#         });  
+#     </script>  
+#     """  
 # # Render the input HTML  
 # input_placeholder.markdown(text_input_html, unsafe_allow_html=True)      
     
