@@ -9,7 +9,7 @@ def fetch_gpt4_response(messages):
         response = openai.ChatCompletion.create(  
             model="gpt-4o",  
             messages=messages,  
-            max_tokens=300,  
+            max_tokens=1000,  
             temperature=0.7,  
         )  
         return response['choices'][0]['message']['content'].strip()  

@@ -53,7 +53,9 @@ def init_input_page():
         
         if done_button:
           selected_business = form.selectbox('Select Business', df['profit_center'].unique(), key='business')  
-          selected_product = form.selectbox('Select Products', df['product_description'].unique(), key='product')  
+          selected_product = form.selectbox('Select Products', df['product_description'].unique(), key='product')
+          print(f"selected_business {selected_business}")  
+          print(f"selected_product {selected_product}")  
           # allocate_button = form.form_submit_button("apply")
           # if allocate_button:
           st.session_state.selected_business = selected_business
@@ -63,5 +65,5 @@ def init_input_page():
   # if submit_button and title_input.strip() and uploaded_file is not None:  
   #   st.session_state.title = title_input
   #   navigate_page("table")  
-  if st.button("next") and uploaded_file is not None and title_input.strip():
+  if st.button("next", key="init-table") and uploaded_file is not None and title_input.strip():
     navigate_page("table")

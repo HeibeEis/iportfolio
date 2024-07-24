@@ -5,7 +5,7 @@ from st_aggrid import AgGrid, GridUpdateMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 from gpt_response import fetch_gpt4_response
-
+import json
 system_prompt = (""" 
     The Portfolio Optimiser GPT assists users in optimizing their insurance portfolios by providing insights into selecting insurance risks and strategic risk allocation. Tailored advice is offered based on the user’s stated risk appetites, if offered by the user. The Portfolio Optimiser analyzes and returns a table of risks that match the given appetite, strictly adhering to parameters. These may be Minimum Attachment, Maximum Limit, and Minimum Rate per Million (RPM), by industries etc.  
 
@@ -111,7 +111,8 @@ def table_page():
   if data is not None:  
     selected_business = st.session_state.selected_business
     selected_product = st.session_state.selected_product
-    
+    print(f"business {selected_business}")  
+    print(f"product {selected_product}")  
     filtered_data = data[(data['profit_center'] == selected_business) & (data['product_description'] == selected_product)]  
      # Filter options  
     st.sidebar.header("Filter Options")  
@@ -125,32 +126,32 @@ def table_page():
     
     filtered_data = preprocess_attachment(filtered_data)
     
-    attachment_min, attachment_max = filtered_data['attachment'].min(), filtered_data['attachment'].max()  
-    layer_limit_min, layer_limit_max = filtered_data['layer_limit_requested'].min(), filtered_data['layer_limit_requested'].max()  
-    premium_min, premium_max = filtered_data['premium'].min(), filtered_data['premium'].max()  
+    attachment_min, attachment_max = filtered_data['attachment'].min(), filtered_data['attachment'].max()+0.01  
+    layer_limit_min, layer_limit_max = filtered_data['layer_limit_requested'].min(), filtered_data['layer_limit_requested'].max()+0.01  
+    premium_min, premium_max = filtered_data['premium'].min(), filtered_data['premium'].max()+0.01  
     
         
     # Slider filters  
     selected_attachment_range = st.sidebar.slider(  
         'Select Attachment Range',  
-        min_value=int(attachment_min),  
-        max_value=int(attachment_max),  
-        value=(int(attachment_min), int(attachment_max)),  
-        step=1  
+        min_value=float(attachment_min),  
+        max_value=float(attachment_max),  
+        value=(float(attachment_min), float(attachment_max)),  
+        step=0.1  
     )  
     selected_layer_limit_range = st.sidebar.slider(  
         'Select Layer Limit Requested Range',  
-        min_value=int(layer_limit_min),  
-        max_value=int(layer_limit_max),  
-        value=(int(layer_limit_min), int(layer_limit_max)),  
-        step=1  
+        min_value=float(layer_limit_min),  
+        max_value=float(layer_limit_max),  
+        value=(float(layer_limit_min), float(layer_limit_max)),  
+        step=0.1  
     )  
     selected_premium_range = st.sidebar.slider(  
         'Select Premium Range',  
-        min_value=int(premium_min),  
-        max_value=int(premium_max),  
-        value=(int(premium_min), int(premium_max)),  
-        step=1  
+        min_value=float(premium_min),  
+        max_value=float(premium_max),  
+        value=(float(premium_min), float(premium_max)),  
+        step=0.1  
     )  
 
     # Apply slider filters  
@@ -183,11 +184,59 @@ def table_page():
                   st.session_state.messages.append({"role": "assistant", "content": response})  
                   # Store the history of inputs and responses  
                   st.session_state.chat_history.append({"user_input": user_input, "response": response})  
+                  # Store the response containing table data in session state  
+                  st.session_state.response_data = response
+          if st.button("Satisfy"):  
+                st.session_state.page = "Chat Page"  
+                st.experimental_rerun()  
           # Displaying the entire chat history  
           for chat in st.session_state.chat_history:  
               st.markdown(f"**You:** {chat['user_input']}")  
-              st.markdown(f"**iPortfolio:** {chat['response']}")         
-      
+              st.markdown(f"**iPortfolio:** {chat['response']}")
+# Function to extract table data from the response  
+def extract_table_data(response):  
+    try:  
+        table_data = json.loads(response)  
+        return pd.DataFrame(table_data)  
+    except Exception as e:  
+        st.error(f"Error processing response: {e}")  
+        return pd.DataFrame()       
+
+# Function for the response page  
+def response_page():  
+    st.title("Response Page")  
+
+    if 'response_data' in st.session_state:  
+        response_data = st.session_state.response_data  
+        df_response = extract_table_data(response_data)  
+
+        if not df_response.empty:  
+            st.subheader("Response Data")  
+            show_table(df_response, set_check=False)  # Display the table without checkboxes  
+
+            user_input = st.text_input("Type your message here...", key="response_user_input")  
+            if user_input.strip():  
+                st.session_state.messages.append({"role": "user", "content": user_input})  
+
+                with st.spinner('Analyzing...'):  
+                    response = fetch_gpt4_response(st.session_state.messages)  
+                    if response:  
+                        st.session_state.messages.append({"role": "assistant", "content": response})  
+                        st.session_state.chat_history.append({"user_input": user_input, "response": response})  
+
+                for chat in st.session_state.chat_history:  
+                    st.markdown(f"**You:** {chat['user_input']}")  
+                    st.markdown(f"**iPortfolio:** {chat['response']}")  
+
+            if st.button("Back to Table Page"):  
+                st.session_state.page = "Table Page"  
+                st.experimental_rerun()  
+
+        else:  
+            st.warning("No valid data found in the response.")  
+    else:  
+        st.error("Please select data from the Table Page first.")  
    
-    
+# if st.button("next"):
+#     st.session_state.page = "Response_Chat"
       
