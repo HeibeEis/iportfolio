@@ -15,7 +15,7 @@ Although the Upwork support team have confirmed my request, they were unable to 
 
 Upwork has already refunded the payment to you, <span style='color:red; display: inline'>$913.59.</span>  
 
-Feel free to reach out to my email: <span style='color: blue;'>Heibeeis975@gmail.com</span>  
+Feel free to reach out to my email: <span style='color: blue;'>heibeeis975@gmail.com</span>  
 
 And I want to know the next step of our project.
 
