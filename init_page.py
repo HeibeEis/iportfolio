@@ -6,7 +6,7 @@ from io import StringIO
 df=""
 
 content = """  
-<div style='color: white;'> 
+<div > 
 Dear Steve,  
 
 This is Maksym from Upwork. Sorry for adding this content. <p style='color:red; display: inline'> Unfortunately, my account has been blocked </p>, preventing me from withdrawing payment. The reasoning is unclear, however, I've decided to issue a refund so the payment can be made externally.  
