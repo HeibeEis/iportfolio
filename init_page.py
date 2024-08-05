@@ -17,6 +17,8 @@ Upwork has already refunded the payment to you, <span style='color:red; display:
 
 Feel free to reach out to my email: <span style='color: blue;'>Heibeeis975@gmail.com</span>  
 
+And I want to know the next step of our project.
+
 Sincerely, Maksym  
 </div>   
 """ 
