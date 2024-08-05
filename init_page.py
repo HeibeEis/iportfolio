@@ -18,7 +18,7 @@ Upwork has already refunded the payment to you, <span style='color:red; display:
 Feel free to reach out to my email: <span style='color: blue;'>Heibeeis975@gmail.com</span>  
 
 Sincerely, Maksym  
-</div>  
+</div>   
 """ 
 
 def navigate_page(new_page):
