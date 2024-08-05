@@ -19,7 +19,7 @@ Feel free to reach out to my email: <span style='color: blue;'>Heibeeis975@gmail
 
 Sincerely, Maksym  
 </div>  
-"""  
+""" 
 
 def navigate_page(new_page):
   st.session_state.page = new_page
