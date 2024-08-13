@@ -5,33 +5,11 @@ from io import StringIO
 
 df=""
 
-content = """  
-<div > 
-Dear Steve,  
-
-This is Maksym from Upwork. Sorry for adding this content. <p style='color:red; display: inline'> Unfortunately, my account has been blocked </p>, preventing me from withdrawing payment. The reasoning is unclear, however, I've decided to issue a refund so the payment can be made externally.  
-
-Although the Upwork support team have confirmed my request, they were unable to resolve the issue. I apologize for this inconvenience. Due to these limited financial transactions, I am unable to process the refund through Upwork myself.  
-
-Upwork has already refunded the payment to you, <span style='color:red; display: inline'>$913.59.</span>  
-
-Feel free to reach out to my email: <span style='color: blue;'>heibeeis975@gmail.com</span>  
-
-And I want to know the next step of our project.
-
-Sincerely, Maksym  
-</div>   
-""" 
-
 def navigate_page(new_page):
   st.session_state.page = new_page
   
 def init_input_page():
-  st.markdown(  
-    content,
-    unsafe_allow_html=True  
-)  
-  st.image("public/Refund_Notification.png", use_column_width=False)
+  
   st.title("Init Input")
   form = st.form(key="title_form")
 
